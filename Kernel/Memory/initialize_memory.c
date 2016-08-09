@@ -78,17 +78,21 @@ char create_gdt_access_byte(struct GDT_access_byte *accessb)
     return access_byte;
 }
 
-void print_meminfo()
+void print_meminfo(int type)
 {
+/*prints memory information returned by BIOS call 0x15 eax = 0xE820; which was called from the bootloader*/
     int listsize = *((int*)AddressRangeDescriptor_arraysize_location);
     struct AddressRangeDescriptor *desc = AddressRangeDescriptor_arraybase;
     int i=0;
     for(i; i<listsize; i++)
         {
-            printlong(&(desc[i].base_address));
-            printlong(&(desc[i].length));
-            printint(desc[i].type);
-            printstr("----------------\n\0");
+            if((desc[i].type == type) || (type == -1))
+                {
+                    printlong(&(desc[i].base_address));
+                    printlong(&(desc[i].length));
+                    printint(desc[i].type);
+                    printstr("----------------\n\0");
+                }
         }
 }
 
@@ -106,7 +110,7 @@ int create_base_gdt(char *gdt_descriptor_identifier)
     struct GDTdescriptor gdt_desc;
     for(i = 0; i < listsize; i++)
         {
-            if(desc[i].type)
+            if(desc[i].type == 1)
                 {
                     usable_ram[count_of_usable_ram_chunks] = i;
                     count_of_usable_ram_chunks++;

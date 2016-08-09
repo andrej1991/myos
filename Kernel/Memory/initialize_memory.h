@@ -48,7 +48,7 @@ struct GDTdescriptor{
 int get_actual_kernel_size();
 int get_normalized_kernel_size();
 void load_gdt_descriptor(long long int *entry_loc, struct GDTdescriptor *descriptor);
-void print_meminfo();
+void print_meminfo(int);
 char create_gdt_access_byte(struct GDT_access_byte *accessb);
 int create_base_gdt(char *gdt_descriptor_identifier);
 int* get_gdt_base();
