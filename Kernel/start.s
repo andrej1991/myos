@@ -3,10 +3,6 @@
 cli
 jmp     _start
 
-memory_descriptor:
-    .rep 12
-    .byte 0
-    .endr
 
 oldGDTdescriptor:
     .word   0
@@ -21,10 +17,8 @@ _start:
     call    get_gdt_base
     lea     GDTdescriptor, %ebx
     movl    %eax, %ds:2(%ebx)
-    lea     memory_descriptor, %eax
     sgdt    (oldGDTdescriptor)
-    push    %eax
-    call    create_base_gdt
+    call    initialize_memory
     movw    $8, %dx
     mulw    %dx
     decw    %ax

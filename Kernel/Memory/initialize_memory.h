@@ -19,6 +19,9 @@
 #define gdt_descriptor 7
 #define idt_descriptor 8
 
+extern int start_of_kernel_data;
+extern int kernel_data_allocation_flags_size;
+
 struct AddressRangeDescriptor{
     long long int base_address;
     long long int length;
@@ -50,7 +53,9 @@ int get_normalized_kernel_size();
 void load_gdt_descriptor(long long int *entry_loc, struct GDTdescriptor *descriptor);
 void print_meminfo(int);
 char create_gdt_access_byte(struct GDT_access_byte *accessb);
-int create_base_gdt(char *gdt_descriptor_identifier);
-int* get_gdt_base();
+int initialize_memory();
+int create_base_gdt(long long int *gdt_base, int limit);
+long long int* get_gdt_base();
+void initialize_kernel_data_area();
 
 #endif

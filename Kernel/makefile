@@ -4,7 +4,7 @@ LD = $(HOME)/cross_compiler/bin/i686-elf-ld
 
 IO_OBJECTS = ./Kernel/IO/VGA_text_mode/print.o ./Kernel/IO/basic_io.o
 
-MEMORY_OBJECTS = ./Kernel/Memory/initialize_memory.o
+MEMORY_OBJECTS = ./Kernel/Memory/initialize_memory.o ./Kernel/Memory/memory_management.o
 
 kernel: in_out memory
 	$(GCC) -mno-red-zone -c ./Kernel/main.c -o ./Kernel/main.o
@@ -17,3 +17,4 @@ in_out:
 
 memory:
 	$(GCC) -mno-red-zone -c ./Kernel/Memory/initialize_memory.c -o ./Kernel/Memory/initialize_memory.o
+	$(GCC) -mno-red-zone -c ./Kernel/Memory/memory_management.c -o ./Kernel/Memory/memory_management.o

@@ -1,6 +1,8 @@
 #include "initialize_memory.h"
 #include "../IO/VGA_text_mode/print.h"
 
+int start_of_kernel_data = 0;
+int kernel_data_allocation_flags_size = 0;
 
 int get_actual_kernel_size()
 {
@@ -96,7 +98,20 @@ void print_meminfo(int type)
         }
 }
 
-int create_base_gdt(char *gdt_descriptor_identifier)
+void initialize_kernel_data_area()
+{
+    int kernel_data_size = size_of_kernel_data_area + 0x100000 - start_of_kernel_data;
+    kernel_data_allocation_flags_size = kernel_data_size / 33;
+    int lim = (kernel_data_allocation_flags_size >> 2) + 1;
+    int i = 0;
+    int *base = start_of_kernel_data;
+    for(i; i <= lim; i++)
+        {
+            base[i] = 0;
+        }
+}
+
+int initialize_memory()
 {
     int kernel_size = get_normalized_kernel_size();
     int listsize = *((int*)AddressRangeDescriptor_arraysize_location);
@@ -105,9 +120,6 @@ int create_base_gdt(char *gdt_descriptor_identifier)
     long long int *gdt_base = get_gdt_base();
     int i, count_of_usable_ram_chunks = 0;
     int limit;
-    char access_byte;
-    struct GDT_access_byte acc;
-    struct GDTdescriptor gdt_desc;
     for(i = 0; i < listsize; i++)
         {
             if(desc[i].type == 1)
@@ -134,40 +146,50 @@ int create_base_gdt(char *gdt_descriptor_identifier)
         }
     else
         {
-            gdt_desc.base = 0;
-            gdt_desc.limit = 0;
-            gdt_desc.granuality_flag = 0;
-            gdt_desc.size_flag = 0;
-            gdt_desc.access_byte = 0;
-            acc.present_bit = 1;
-            acc.privilege_level = 0;
-            acc.descriptor_type = 1;
-            acc.executable_bit = 1;
-            acc.direction_bit = 0;
-            acc.read_write = 1;
-            acc.accessed_bit = 0;
-            //mandatory zero-descriptor
-            load_gdt_descriptor(gdt_base, &gdt_desc);
-            gdt_base++;
-            //kernel code descriptor
-            gdt_desc.limit = limit;
-            gdt_desc.granuality_flag = 1;
-            gdt_desc.size_flag = 1;
-            gdt_desc.access_byte = create_gdt_access_byte(&acc);
-            load_gdt_descriptor(gdt_base, &gdt_desc);
-            gdt_base++;
-            //kernel data descriptor
-            acc.executable_bit = 0;
-            gdt_desc.access_byte = create_gdt_access_byte(&acc);
-            load_gdt_descriptor(gdt_base, &gdt_desc);
-            gdt_base++;
+            start_of_kernel_data = 0x100000 + kernel_size + size_of_gdt + size_of_idt;
+            create_protected_flat_model(gdt_base, limit);
+            initialize_kernel_data_area();
         }
     return 3;
 }
 
-int* get_gdt_base()
+void create_protected_flat_model(long long int *gdt_base, int limit)
 {
-    return 0x100000 + get_normalized_kernel_size();
+    char access_byte;
+    struct GDTdescriptor gdt_desc;
+    gdt_desc.base = 0;
+    gdt_desc.limit = 0;
+    gdt_desc.granuality_flag = 0;
+    gdt_desc.size_flag = 0;
+    gdt_desc.access_byte = 0;
+    struct GDT_access_byte acc;
+    acc.present_bit = 1;
+    acc.privilege_level = 0;
+    acc.descriptor_type = 1;
+    acc.executable_bit = 1;
+    acc.direction_bit = 0;
+    acc.read_write = 1;
+    acc.accessed_bit = 0;
+    //mandatory zero-descriptor
+    load_gdt_descriptor(gdt_base, &gdt_desc);
+    gdt_base++;
+    //kernel code descriptor
+    gdt_desc.limit = limit;
+    gdt_desc.granuality_flag = 1;
+    gdt_desc.size_flag = 1;
+    gdt_desc.access_byte = create_gdt_access_byte(&acc);
+    load_gdt_descriptor(gdt_base, &gdt_desc);
+    gdt_base++;
+    //kernel data descriptor
+    acc.executable_bit = 0;
+    gdt_desc.access_byte = create_gdt_access_byte(&acc);
+    load_gdt_descriptor(gdt_base, &gdt_desc);
+    gdt_base++;
+}
+
+long long int* get_gdt_base()
+{
+    return (long long int*)(0x100000 + get_normalized_kernel_size());
 }
 
 
