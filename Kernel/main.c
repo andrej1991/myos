@@ -11,8 +11,14 @@ int main()
     printlong(&gdt_base[0]);
     printlong(&gdt_base[1]);
     printlong(&gdt_base[2]);
-    initialize_kernel_data_area();
-    kmalloc(14);
+    int *p1 = kmalloc(33);
+    int *p2 = kmalloc(32);
+    int *p3 = kmalloc(4);
+    int *p4 = kmalloc(4);
+    printint(p1);
+    printint(p2);
+    printint(p3);
+    printint(p4);
     printstr("hello world!!!\0");
     __asm__("jmp .");
 }

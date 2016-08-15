@@ -6,5 +6,6 @@
 #define NULL 0
 
 void* kmalloc(int size);
+int kfree(void *p, int size);
 
 #endif

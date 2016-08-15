@@ -28,31 +28,22 @@ void generate_reference_num(int size, int required_bytes, char *allocation_numbe
 int compare_with_reference(int required_bytes, char *reference, char *allocation_indicator)
     {
         int i;
-        //int debug1, debug2;
         for(i = 0; i < required_bytes; i++)
             {
                 if((reference[i] & allocation_indicator[i]) != 0)
                     {
-                        /*debug1=allocation_indicator[0];
-                        printint(debug1);
-                        debug1=allocation_indicator[1];
-                        printint(debug1);
-                        debug2=reference[0];
-                        printint(debug2);
-                        debug2=reference[1];
-                        printint(debug2);*/
                         return 0;
                     }
             }
         return 1;
     }
 
-int find_out_if_data_can_fit_to_this_section(int required_bytes, int *begining_of_appropriate_area, char *reference, char *used_indicator)
+int find_out_if_data_can_fit_to_this_section(int required_bytes, int *begining_of_appropriate_area, char *reference, char *allocation_indicator)
 {
     int i;
     for(i = 0; i < 8; i++)
         {
-            if(compare_with_reference(required_bytes, reference, used_indicator))
+            if(compare_with_reference(required_bytes, reference, allocation_indicator))
                 {
                     return 1;
                 }
@@ -82,16 +73,14 @@ void* kmalloc(int s)
     char allocation_number[required_bytes];
     char allocation_number_helper[required_bytes];
     generate_reference_num(size, required_bytes, allocation_number, allocation_number_helper);
-    char *used_indicator = start_of_kernel_data;
-    //used_indicator[0] = 31;
-    //used_indicator[1] = 1;
+    char *allocation_indicator = (char*)start_of_kernel_data;
     int begining_of_appropriate_area = 0;
     int rangehelper = kernel_data_allocation_flags_size - required_bytes;
     int i;
     int first_check = 0;
     for(i = 0; i < rangehelper; i++)
         {
-            if(find_out_if_data_can_fit_to_this_section(required_bytes, &begining_of_appropriate_area, allocation_number_helper, used_indicator))
+            if(find_out_if_data_can_fit_to_this_section(required_bytes, &begining_of_appropriate_area, allocation_number_helper, allocation_indicator))
                 {
                     first_check = 1;
                     break;
@@ -103,14 +92,15 @@ void* kmalloc(int s)
                         {
                             allocation_number_helper[j] = allocation_number[j];
                         }
-                    used_indicator++;
+                    allocation_indicator++;
                 }
         }
-    //printint(size);
-    //printint(begining_of_appropriate_area);
     if(first_check)
         {
-            /*TODO registering the allocated area*/
+            for(i = 0; i < required_bytes; i++)
+                {
+                    allocation_indicator[i] |= allocation_number_helper[i];
+                }
             return (void*)(start_of_kernel_data + kernel_data_allocation_flags_size + (begining_of_appropriate_area << 2));
         }
     else
