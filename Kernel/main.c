@@ -8,6 +8,7 @@ int main()
 {
 
     long long int *gdt_base = get_gdt_base();
+    char *allocation_indicator = (char*)start_of_kernel_data;
     printlong(&gdt_base[0]);
     printlong(&gdt_base[1]);
     printlong(&gdt_base[2]);
@@ -15,10 +16,15 @@ int main()
     int *p2 = kmalloc(32);
     int *p3 = kmalloc(4);
     int *p4 = kmalloc(4);
-    printint(p1);
-    printint(p2);
-    printint(p3);
-    printint(p4);
+    printint(allocation_indicator[0]);
+    printint(allocation_indicator[1]);
+    printint(allocation_indicator[2]);
+    printint(allocation_indicator[3]);
+    kfree(p3, 4);
+    printint(allocation_indicator[0]);
+    printint(allocation_indicator[1]);
+    printint(allocation_indicator[2]);
+    printint(allocation_indicator[3]);
     printstr("hello world!!!\0");
     __asm__("jmp .");
 }

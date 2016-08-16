@@ -61,18 +61,24 @@ int find_out_if_data_can_fit_to_this_section(int required_bytes, int *begining_o
     return 0;
 }
 
-void* kmalloc(int s)
+int get_required_bytes(int size, int *indicator_bit_count)
 {
-    int size = (s >> 2); //making 4 byte value of size
-    if(s % 4)
-        size++;
-    int help = (size >> 3) + 1;
-    if(size % 8)
+    *indicator_bit_count = (size >> 2); //making 4 byte value of size
+    if(size % 4)
+        (*indicator_bit_count)++;
+    int help = (*indicator_bit_count >> 3) + 1;
+    if(*indicator_bit_count % 8)
         help++;
-    const int required_bytes = help;
+    return help;
+}
+
+void* kmalloc(int size)
+{
+    int indicator_bit_count;
+    const int required_bytes = get_required_bytes(size, &indicator_bit_count);
     char allocation_number[required_bytes];
     char allocation_number_helper[required_bytes];
-    generate_reference_num(size, required_bytes, allocation_number, allocation_number_helper);
+    generate_reference_num(indicator_bit_count, required_bytes, allocation_number, allocation_number_helper);
     char *allocation_indicator = (char*)start_of_kernel_data;
     int begining_of_appropriate_area = 0;
     int rangehelper = kernel_data_allocation_flags_size - required_bytes;
@@ -107,6 +113,47 @@ void* kmalloc(int s)
         {
             return NULL;
         }
+}
+
+int kfree(void *p, int size)
+{
+    /*if((int)p % 4)
+        {
+            printstr("returning\n");
+            return 0;
+        }*/
+    int indicator_bit_count;
+    int required_bytes = get_required_bytes(size, &indicator_bit_count);
+    char *allocation_indicator = (char*)start_of_kernel_data;
+    char allocation_number[required_bytes];
+    int begining_of_appropriate_area = ((int)p - start_of_kernel_data - kernel_data_allocation_flags_size) >> 2;
+    int i;
+    for(i = 1; i < (required_bytes -1); i++)
+        {
+            allocation_number[i] = 0;
+        }
+    allocation_number[0] = allocation_number[required_bytes - 1] = 0xFF;
+    int bitlimit = 8;
+    int start = begining_of_appropriate_area % 8;
+    if((start + indicator_bit_count) < 8)
+        bitlimit = start + indicator_bit_count;
+    char sample[8] = {0xFE, 0xFD, 0xFB, 0xF7, 0xEF, 0xDF, 0xBF, 0x7F};
+    for(i = start; i < bitlimit; i++)
+        {
+            allocation_number[0] &= sample[i];
+        }
+    bitlimit = bitlimit - start + (required_bytes)*8;
+    if(bitlimit < indicator_bit_count)
+        {
+            allocation_number[required_bytes - 1] <<= (indicator_bit_count - bitlimit);
+        }
+    int starting_byte = begining_of_appropriate_area >> 3;
+    printint(starting_byte);
+    for(i = 0; i < required_bytes; i++)
+        {
+            allocation_indicator[starting_byte + i] &= allocation_number[i];
+        }
+    return 1;
 }
 
 
