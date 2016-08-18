@@ -128,11 +128,10 @@ int kfree(void *p, int size)
     char allocation_number[required_bytes];
     int begining_of_appropriate_area = ((int)p - start_of_kernel_data - kernel_data_allocation_flags_size) >> 2;
     int i;
-    for(i = 1; i < (required_bytes -1); i++)
+    for(i = 0; i < required_bytes; i++)
         {
-            allocation_number[i] = 0;
+            allocation_number[i] = 0xFF;
         }
-    allocation_number[0] = allocation_number[required_bytes - 1] = 0xFF;
     int bitlimit = 8;
     int start = begining_of_appropriate_area % 8;
     if((start + indicator_bit_count) < 8)
@@ -142,13 +141,18 @@ int kfree(void *p, int size)
         {
             allocation_number[0] &= sample[i];
         }
-    bitlimit = bitlimit - start + (required_bytes)*8;
-    if(bitlimit < indicator_bit_count)
+    int bytelimit = (indicator_bit_count - (bitlimit - start)) >> 3;
+    if(bytelimit > (required_bytes - 1))
         {
-            allocation_number[required_bytes - 1] <<= (indicator_bit_count - bitlimit);
+            printstr("some error happened in kfree while calculating the bytelimit variable\n");
+            return 0;
         }
+    for(i = 1; i <= bytelimit; i++)
+        {
+            allocation_number[i] = 0;
+        }
+    allocation_number[bytelimit + 1] <<= ((indicator_bit_count - (bitlimit - start)) % 8);
     int starting_byte = begining_of_appropriate_area >> 3;
-    printint(starting_byte);
     for(i = 0; i < required_bytes; i++)
         {
             allocation_indicator[starting_byte + i] &= allocation_number[i];
