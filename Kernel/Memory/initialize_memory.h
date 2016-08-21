@@ -48,6 +48,14 @@ struct GDTdescriptor{
     char access_byte;
 }GDTdescriptor;
 
+typedef struct GDTR{
+    short int limit;
+    int base;
+}GDTR;
+
+extern GDTR gdtr_content;
+extern GDTR old_gdtr_content;
+
 int get_actual_kernel_size();
 int get_normalized_kernel_size();
 void load_gdt_descriptor(long long int *entry_loc, struct GDTdescriptor *descriptor);

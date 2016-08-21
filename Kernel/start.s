@@ -3,27 +3,30 @@
 cli
 jmp     _start
 
-
-oldGDTdescriptor:
+.global old_gdtr_content
+old_gdtr_content:
     .word   0
     .int    0
 
-GDTdescriptor:
+.global gdtr_content
+gdtr_content:
     .word   0
     .int    0
 
 .globl _start
 _start:
+    lea     gdtr_content, %ebx
     call    get_gdt_base
-    lea     GDTdescriptor, %ebx
     movl    %eax, %ds:2(%ebx)
-    sgdt    (oldGDTdescriptor)
+    sgdt    (old_gdtr_content)
     call    initialize_memory
     movw    $8, %dx
     mulw    %dx
     decw    %ax
     movw    %ax, %ds:(%ebx)
-    lgdt    (GDTdescriptor)
+    jmp     $8, $loadgdt
+    loadgdt:
+    lgdt    (gdtr_content)
     movl    $0x10,%eax
     mov     %ax,%ds
     mov     %ax,%es
