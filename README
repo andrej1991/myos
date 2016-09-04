@@ -1,0 +1,6 @@
+Infromation about the memory returned by INT 0x15 (function 0xE820) is stored in an array beginig at 0x40104. The size of the array is in a 32 bit integer at position 0x40100.
+The kernel is loaded to the address 0x100000.
+After the kernel the GDT is loaded. The size of the kernel is adjusted to 4KB boundary.
+GDT is folowed by the IDT.
+After the IDT the kernel data is loaded.
+The kernel stack is started at 0x40000.
